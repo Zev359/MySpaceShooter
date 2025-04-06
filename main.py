@@ -1,0 +1,109 @@
+import pygame
+from os.path import join  # can avoid using / or \ when importing from filepath
+
+from random import randint
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, groups):
+        super().__init__(groups)
+        self.image = pygame.image.load(join('images', 'player.png')).convert_alpha()
+        self.rect = self.image.get_frect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
+        self.direction = pygame.Vector2()
+        self.speed = 300
+
+        #cooldwon
+        self.can_shoot = True
+        self.laser_shoot_time = 0
+        self.cooldown_duration = 400
+
+    def laser_timer(self):
+        if not self.can_shoot:
+            current_time = pygame.time.get_ticks() #runs continuesly
+            if current_time - self.laser_shoot_time >= self.cooldown_duration:
+                self.can_shoot = True
+
+    def update(self, dt):
+        keys = pygame.key.get_pressed()
+        self.direction.x = int(keys[pygame.K_RIGHT]) - int(keys[pygame.K_LEFT])
+        self.direction.y = int(keys[pygame.K_DOWN]) - int(keys[pygame.K_UP])
+        self.direction = self.direction.normalize() if self.direction else self.direction
+        self.rect.center += self.direction * self.speed * dt
+
+        recent_keys = pygame.key.get_just_pressed()
+        if recent_keys[pygame.K_SPACE] and self.can_shoot: # only triggered once
+            Laser(laser_surf, self.rect.midtop, all_sprites)
+            self.can_shoot = False
+            self.laser_shoot_time = pygame.time.get_ticks()
+
+        self.laser_timer()
+class Star(pygame.sprite.Sprite):
+    def __init__(self, groups, surf):
+        super().__init__(groups)
+        self.image = surf
+        self.rect = self.image.get_frect(center = (randint(0, WINDOW_WIDTH),randint(0, WINDOW_HEIGHT)))
+
+
+class Laser(pygame.sprite.Sprite):
+    def __init__(self, surf, pos, groups):
+        super().__init__(groups)
+        self.image = surf
+        self.rect = self.image.get_frect(midbottom = pos)
+
+    def update(self, dt):
+        self.rect.centery -= 400 * dt
+        if self.rect.bottom < 0: # bottom of laser rect
+            self.kill() # gets rid of sprite after it goes off-screen, removes sprite from all groups
+
+class Meteor(pygame.sprite.Sprite):
+    def __init__(self, surf, pos, groups):
+        super().__init__(groups)
+        self.image = surf
+        self.rect = self.image.get_frect()
+
+# general setup
+pygame.init()
+WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
+display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))  # main surface, only one, always visible canvas!
+pygame.display.set_caption('Space Shooter')
+running = True
+clock = pygame.time.Clock() #clock object, control frame rate
+
+# plain surface
+surf = pygame.Surface((100, 200))  # must attach to display surf to be visible
+surf.fill('blue')
+x = 100
+
+all_sprites = pygame.sprite.Group()
+star_surf = pygame.image.load(join('images', 'star.png')).convert_alpha()
+for i in range(20):
+    Star(all_sprites, star_surf) #imports the star surf only once, more efficient
+
+player = Player(all_sprites)
+meteor_surf = pygame.image.load(join('images', 'meteor.png')).convert_alpha()
+meteor_rect = meteor_surf.get_frect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT / 2))
+
+laser_surf = pygame.image.load(join('images', 'laser.png')).convert_alpha()
+
+# custom events - meteor event, timer triggers 2x/1s and creates meteor
+meteor_event = pygame.event.custom_type()
+pygame.time.set_timer(meteor_event, 500)
+
+while running:  # main game loop
+    dt = clock.tick()/1000
+    # event loop
+    for event in pygame.event.get():  # check for user input, keystroke or mouse click
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+
+    # update all sprites
+    all_sprites.update(dt)
+
+    # draw the game
+    display_surface.fill('darkgrey')  # order of surfaces matters
+    all_sprites.draw(display_surface)
+    pygame.display.update()  # draws all the elements in while loop on display surface
+
+pygame.quit()
