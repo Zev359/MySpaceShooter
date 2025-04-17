@@ -1,4 +1,4 @@
-import pygame
+import pygame  #2:36
 from os.path import join  # can avoid using / or \ when importing from filepath
 
 from random import randint, uniform
@@ -40,7 +40,7 @@ class Star(pygame.sprite.Sprite):
     def __init__(self, groups, surf):
         super().__init__(groups)
         self.image = surf
-        self.rect = self.image.get_frect(center = (randint(0, WINDOW_WIDTH),randint(0, WINDOW_HEIGHT)))
+        self.rect = self.image.get_frect(center=(randint(0, WINDOW_WIDTH), randint(0, WINDOW_HEIGHT)))
 
 
 class Laser(pygame.sprite.Sprite):
@@ -61,9 +61,10 @@ class Meteor(pygame.sprite.Sprite):
         self.rect = self.image.get_frect(center = pos)
         self.start_time = pygame.time.get_ticks()
         self.lifetime = 3000
-        self.direction =pygame.Vector2(uniform(-0.5, 0.5),1)
+        self.direction = pygame.Vector2(uniform(-0.5, 0.5),1) # meteor generated at random x position
+        self.speed = randint(400,500)
     def update(self, dt):
-        self.rect.centery += 400*dt
+        self.rect.center += self.direction * self.speed * dt
         if pygame.time.get_ticks() - self.start_time >= self.lifetime:
             self.kill()
 
