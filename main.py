@@ -1,4 +1,4 @@
-import pygame  #2:50
+import pygame  #2:57
 from os.path import join  # can avoid using / or \ when importing from filepath
 
 from random import randint, uniform
@@ -69,6 +69,19 @@ class Meteor(pygame.sprite.Sprite):
             self.kill()
 
 
+def collisions():
+    global running
+
+    collision_sprites = pygame.sprite.spritecollide(player, meteor_sprites, True)
+    if collision_sprites:
+        running = False
+        print(collision_sprites[0])
+
+    for laser in laser_sprites:
+        collided_sprites = pygame.sprite.spritecollide(laser, meteor_sprites, True)
+        if collision_sprites:
+            laser.kill()
+
 # general setup
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
@@ -77,10 +90,12 @@ pygame.display.set_caption('Space Shooter')
 running = True
 clock = pygame.time.Clock() #clock object, control frame rate
 
-# imports
+# import
 star_surf = pygame.image.load(join('images', 'star.png')).convert_alpha()
 meteor_surf = pygame.image.load(join('images', 'meteor.png')).convert_alpha()
 laser_surf = pygame.image.load(join('images', 'laser.png')).convert_alpha()
+font = pygame.font.Font(join('images', 'Oxanium-Bold.ttf'), 20)# none is default font
+text_surf = font.render('text', True, 'red')
 
 # Sprites
 all_sprites = pygame.sprite.Group()
@@ -111,18 +126,12 @@ while running:  # main game loop
 
     # update
     all_sprites.update(dt)
-    collision_sprites = pygame.sprite.spritecollide(player, meteor_sprites, True)
-    if collision_sprites:
-        print(collision_sprites[0])
-
-    for laser in laser_sprites:
-        pygame.sprite.spritecollide(laser, meteor_sprites, True)
-
-
+    collisions()
 
     # draw the game
     display_surface.fill('darkgrey')  # order of surfaces matters
     all_sprites.draw(display_surface)
+    display_surface.blit(text_surf,(0,0) )
     # test collision
 
     pygame.display.update()  # draws all the elements in while loop on display surface
