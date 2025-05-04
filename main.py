@@ -25,7 +25,6 @@ class Player(pygame.sprite.Sprite):
                 self.can_shoot = True
 
     def update(self, dt):
-        #self.rect.center = pygame.mouse.get_pos()
         keys = pygame.key.get_pressed()
         self.direction.x = int(keys[pygame.K_RIGHT]) - int(keys[pygame.K_LEFT])
         self.direction.y = int(keys[pygame.K_DOWN]) - int(keys[pygame.K_UP])
@@ -58,12 +57,12 @@ class Laser(pygame.sprite.Sprite):
 class Meteor(pygame.sprite.Sprite):
     def __init__(self, surf, pos, groups):
         super().__init__(groups)
-        self.original_surf = surf
+        self.original_surf = surf.convert_alpha()
         self.image = surf
-        self.rect = self.image.get_frect(center = pos)
+        self.rect = self.image.get_frect(center=pos)
         self.start_time = pygame.time.get_ticks()
         self.lifetime = 3000
-        self.direction = pygame.Vector2(uniform(-0.5, 0.5),1) # meteor generated at random x position
+        self.direction = pygame.Vector2(uniform(-0.5, 0.5), 1)# meteor generated at random x position
         self.speed = randint(400, 500)
         self.rotation_speed = randint(40, 80)
         self.rotation = 0
@@ -74,8 +73,15 @@ class Meteor(pygame.sprite.Sprite):
             self.kill()
         self.rotation += self.rotation_speed * dt
         self.image = pygame.transform.rotozoom(self.original_surf, self.rotation, 1)
-        self.rect = self.image.get_frect(center = self.rect.center)
+        self.rect = self.image.get_frect(center=self.rect.center)
         # creates a new rect with the same center pos as the last rect
+
+class AnimatedExplosion(pygame.sprite.Sprite):
+    def __init__(self, frames, pos, groups):
+        super().__init__(groups)
+        self.image = frames[0]
+        self.rect = self.image.get_frect(center=pos)
+
 def collisions():
     global running
 
@@ -88,6 +94,7 @@ def collisions():
         collided_sprites = pygame.sprite.spritecollide(laser, meteor_sprites, True)
         if collision_sprites:
             laser.kill()
+            AnimatedExplosion(explosion_frames, laser.rect.midtop, all_sprites)
 
 def display_score():
     current_time = pygame.time.get_ticks() // 100
@@ -109,6 +116,8 @@ star_surf = pygame.image.load(join('images', 'star.png')).convert_alpha()
 meteor_surf = pygame.image.load(join('images', 'meteor.png')).convert_alpha()
 laser_surf = pygame.image.load(join('images', 'laser.png')).convert_alpha()
 font = pygame.font.Font(join('images', 'Oxanium-Bold.ttf'), 35)# none is default font
+explosion_frames = [pygame.image.load(join('images', 'explosion', f'{i}.png')).convert_alpha() for i in range(21)]
+print(explosion_frames) #for loop iterates over explosion images up to 21
 
 # Sprites
 all_sprites = pygame.sprite.Group()
