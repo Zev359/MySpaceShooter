@@ -20,7 +20,7 @@ class Player(pygame.sprite.Sprite):
         #mask
     def laser_timer(self):
         if not self.can_shoot:
-            current_time = pygame.time.get_ticks() #runs continuesly
+            current_time = pygame.time.get_ticks() # runs continuously
             if current_time - self.laser_shoot_time >= self.cooldown_duration:
                 self.can_shoot = True
 
@@ -79,8 +79,18 @@ class Meteor(pygame.sprite.Sprite):
 class AnimatedExplosion(pygame.sprite.Sprite):
     def __init__(self, frames, pos, groups):
         super().__init__(groups)
-        self.image = frames[0]
+        self.frames = frames
+        self.frame_index = 0
+        self.image = self.frames[self.frame_index]
         self.rect = self.image.get_frect(center=pos)
+
+    def update(self, dt):
+        self.frame_index += 20 * dt
+        if self.frame_index < len(self.frames): #if the frame_index is less then total frames
+            self.image = self.frames[int(self.frame_index)] #keep playing the animation
+        else:
+            self.kill()
+
 
 def collisions():
     global running
@@ -88,11 +98,10 @@ def collisions():
     collision_sprites = pygame.sprite.spritecollide(player, meteor_sprites, True, pygame.sprite.collide_mask)
     if collision_sprites:  # pygame.sprite.collide_mask is applied to all sprites
         running = False
-        #print(collision_sprites[0])
 
     for laser in laser_sprites:
         collided_sprites = pygame.sprite.spritecollide(laser, meteor_sprites, True)
-        if collision_sprites:
+        if collided_sprites:
             laser.kill()
             AnimatedExplosion(explosion_frames, laser.rect.midtop, all_sprites)
 
@@ -131,7 +140,6 @@ player = Player(all_sprites)
 # Custom events - meteor event, timer triggers 2x/1s and creates meteor
 meteor_event = pygame.event.custom_type()
 pygame.time.set_timer(meteor_event, 500)
-
 
 while running:  # main game loop
     dt = clock.tick()/1000
